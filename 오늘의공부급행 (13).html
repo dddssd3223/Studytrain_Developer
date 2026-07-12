@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘의 공부 급행</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<style>
+:root{
+  --night:#0A0F22;
+  --night-2:#111834;
+  --panel:#161F3E;
+  --line:#2A3560;
+  --steel:#E9ECF6;
+  --steel-dim:#98A2C4;
+  --amber:#F5B841;
+  --amber-deep:#E08A2E;
+  --dawn:#FF8E5E;
+  --green:#4CC48A;
+  --red:#E05656;
+  --plate-navy:#0F2A6B;
+  --speed:#E9ECF680;
+}
+/* ── 낮 테마 (일출~한낮) ─────────────────────────── */
+body.day{
+  --night:#FBF2E2;
+  --night-2:#FFFDF7;
+  --panel:#FFF6E6;
+  --line:#E7D9BD;
+  --steel:#2A2F45;
+  --steel-dim:#8C7F5F;
+  --amber:#E0851F;
+  --amber-deep:#C96F12;
+  --dawn:#F2622E;
+  --speed:#2A2F4540;
+  background:linear-gradient(180deg,#FFE3BC 0%,#FCF1DC 45%,#FBF4E6 100%) fixed;
+}
+body.day::before{opacity:0}
+body.day .dawn{
+  background:radial-gradient(ellipse 70% 90% at 100% 55%, #FFB25966 0%, #FFD9A044 45%, transparent 75%);
+}
+body.day .headlight{opacity:.35}
+body.day .rail-fill{box-shadow:0 0 14px #E0851F55}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--night);
+  color:var(--steel);
+  font-family:"Pretendard Variable",Pretendard,sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed;inset:0;
+  background:
+    radial-gradient(1px 1px at 12% 18%, #ffffff55 0, transparent 100%),
+    radial-gradient(1px 1px at 34% 8%, #ffffff40 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 58% 22%, #ffffff30 0, transparent 100%),
+    radial-gradient(1px 1px at 76% 12%, #ffffff50 0, transparent 100%),
+    radial-gradient(1px 1px at 90% 28%, #ffffff35 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 22% 30%, #ffffff25 0, transparent 100%);
+  pointer-events:none;z-index:0;
+  transition:opacity 1.2s;
+}
+.wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:28px 20px 100px}
+
+/* ── 상단 운행 정보 ─────────────────────────── */
+header{
+  display:flex;align-items:baseline;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:18px;
+}
+.line-badge{display:inline-flex;align-items:center;gap:10px}
+.line-badge .dot{
+  width:12px;height:12px;border-radius:50%;
+  background:var(--amber);
+  box-shadow:0 0 12px var(--amber);
+  animation:pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+h1{
+  font-family:Paperlogy,sans-serif;font-weight:800;
+  font-size:clamp(26px,4vw,38px);letter-spacing:-0.02em;
+}
+h1 em{font-style:normal;color:var(--amber)}
+.run-info{
+  display:flex;gap:22px;align-items:baseline;
+  font-variant-numeric:tabular-nums;
+  color:var(--steel-dim);font-size:14px;
+  flex:1;
+}
+.run-info b{color:var(--steel);font-size:20px;font-family:Paperlogy,sans-serif;font-weight:600}
+.run-info .lbl{font-size:11px;letter-spacing:.18em;display:block;margin-bottom:2px}
+.sync-widget{
+  display:flex;align-items:center;gap:12px;font-size:12px;
+}
+.sync-dot{
+  width:8px;height:8px;border-radius:50%;display:inline-block;
+  animation:syncPulse 2s ease-in-out infinite;
+}
+.sync-dot.ready{background:var(--green);box-shadow:0 0 8px var(--green)}
+.sync-dot.syncing{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.sync-dot.error{background:var(--red);box-shadow:0 0 8px var(--red)}
+.sync-dot.off{background:var(--steel-dim)}
+@keyframes syncPulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ── 탭 ─────────────────────────── */
+.tabs{
+  display:flex;gap:8px;margin:22px 0 0;
+  background:var(--night-2);border:1px solid var(--line);
+  border-radius:12px;padding:6px;width:max-content;max-width:100%;
+  position:relative;z-index:5;
+  flex-wrap:wrap;
+}
+.tab{
+  border:none;background:transparent;color:var(--steel-dim);
+  font-family:Paperlogy,sans-serif;font-weight:600;font-size:15px;
+  padding:10px 20px;border-radius:8px;cursor:pointer;
+  letter-spacing:.04em;transition:background .2s,color .2s;
+  display:flex;align-items:center;gap:8px;
+}
+.tab .signal{width:8px;height:8px;border-radius:50%;background:var(--line);transition:background .2s,box-shadow .2s}
+.tab.active{background:var(--panel);color:var(--steel)}
+.tab.active .signal{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.tab:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.view{display:none}
+.view.active{display:block;animation:viewIn .35s ease}
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── 트랙 히어로 ─────────────────────────── */
+.track-hero{
+  position:relative;
+  margin:16px 0 6px;
+  padding:128px 0 78px;
+}
+.dawn{
+  position:absolute;right:-40px;top:0;bottom:0;width:38%;
+  background:radial-gradient(ellipse 70% 90% at 100% 55%, #FF8E5E33 0%, #F5B84118 45%, transparent 75%);
+  pointer-events:none;
+}
+.depart{position:absolute;left:0;top:26px}
+.depart .flag{font-family:Paperlogy,sans-serif;font-weight:700;font-size:14px;color:var(--steel-dim)}
+.depart .sub{font-size:11px;color:var(--steel-dim);letter-spacing:.14em}
+.terminus{position:absolute;right:0;top:26px;text-align:right}
+.terminus .flag{
+  font-family:Paperlogy,sans-serif;font-weight:700;font-size:15px;color:var(--dawn);
+  letter-spacing:.08em;
+}
+.terminus .sub{font-size:11px;color:var(--steel-dim);letter-spacing:.14em}
+.rail{
+  position:relative;height:8px;border-radius:4px;
+  background:linear-gradient(90deg,var(--line) 0%,var(--line) 60%,#4a3a55 85%,#7a4a45 100%);
+}
+.rail::before{
+  content:"";position:absolute;left:0;right:0;top:-9px;height:2px;
+  background-image:linear-gradient(90deg,var(--line) 0 10px,transparent 10px 26px);
+  background-size:26px 2px;opacity:.7;
+}
+.rail-fill{
+  position:absolute;left:0;top:0;bottom:0;width:0%;
+  border-radius:4px;
+  background:linear-gradient(90deg,var(--amber-deep),var(--amber));
+  box-shadow:0 0 14px #F5B84166;
+  transition:width 1.2s linear;
+}
+.station-tick{
+  position:absolute;top:-5px;width:4px;height:18px;border-radius:2px;
+  background:var(--steel-dim);transform:translateX(-50%);
+}
+.station-tick.lunch{background:var(--amber-deep);height:14px;top:-3px;border-radius:50%}
+.station-tick.passed{background:var(--amber)}
+.station-tick .tick-label{
+  position:absolute;left:50%;transform:translateX(-50%);
+  font-size:11px;color:var(--steel-dim);white-space:nowrap;
+}
+.station-tick.lab-down .tick-label{top:34px}
+.station-tick.lab-up .tick-label{bottom:60px}
+.station-tick.passed .tick-label{color:var(--amber)}
+
+.train{
+  position:absolute;left:0%;top:-40px;
+  transform:translateX(-88%);
+  transition:left 1.2s linear;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.5));
+}
+.train svg{display:block}
+.headlight{
+  position:absolute;left:100%;top:12px;width:120px;height:22px;
+  background:linear-gradient(90deg,#F5B84155,transparent 80%);
+  clip-path:polygon(0 40%,100% 0,100% 100%,0 60%);
+  pointer-events:none;
+}
+.speedlines{position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .8s}
+.track-hero.running .speedlines{opacity:1}
+.speedlines i{
+  position:absolute;height:1.5px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--speed),transparent);
+  animation:zoom 1s linear infinite;
+}
+.speedlines i:nth-child(1){top:22%;width:130px;animation-duration:.8s}
+.speedlines i:nth-child(2){top:44%;width:90px;animation-delay:.25s;animation-duration:1.1s}
+.speedlines i:nth-child(3){top:66%;width:150px;animation-delay:.5s;animation-duration:.7s}
+.speedlines i:nth-child(4){top:84%;width:100px;animation-delay:.15s;animation-duration:.95s}
+@keyframes zoom{from{right:-160px}to{right:110%}}
+.track-hero.running .train{animation:rumble .18s linear infinite}
+@keyframes rumble{0%,100%{margin-top:0}50%{margin-top:-1px}}
+.run-status{
+  text-align:center;color:var(--steel-dim);font-size:13px;letter-spacing:.06em;
+  margin-bottom:22px;
+}
+.run-status b{color:var(--amber);font-weight:700}
+
+/* ── 운행 현황 ─────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:4px 0 34px}
+.stat{
+  background:var(--night-2);border:1px solid var(--line);border-radius:10px;
+  padding:14px 16px;
+}
+.stat .k{font-size:11px;letter-spacing:.16em;color:var(--steel-dim);margin-bottom:6px}
+.stat .v{font-family:Paperlogy,sans-serif;font-weight:700;font-size:24px;font-variant-numeric:tabular-nums}
+.stat .v small{font-size:13px;font-weight:400;color:var(--steel-dim);margin-left:2px}
+.stat .v.green{color:var(--green)}
+.stat .v.red{color:var(--red)}
+
+/* ── 역명판 카드 ─────────────────────────── */
+.stations{display:flex;flex-direction:column;gap:14px}
+.section-title{
+  font-family:Paperlogy,sans-serif;font-weight:600;font-size:15px;
+  letter-spacing:.2em;color:var(--steel-dim);margin-bottom:14px;
+}
+.plate{
+  position:relative;
+  background:#F2F4FA;color:#12193A;border-radius:12px;overflow:hidden;
+  border:1px solid #ffffff22;
+  display:grid;grid-template-columns:1fr auto;
+  transition:opacity .3s, box-shadow .3s;
+}
+.plate.past{opacity:.6}
+.plate.st-done{box-shadow:inset 4px 0 0 var(--green)}
+.plate.st-fail{box-shadow:inset 4px 0 0 var(--red)}
+.plate.now{box-shadow:0 0 0 2px var(--amber), 0 0 22px #F5B84144}
+.plate-band{
+  grid-column:1/-1;background:var(--plate-navy);color:#fff;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:6px 14px;font-size:12px;letter-spacing:.06em;
+}
+.plate.now .plate-band::after{content:"현재 운행 구간 ▸";color:var(--amber);font-weight:700;white-space:nowrap}
+.plate-band .tm{font-variant-numeric:tabular-nums;opacity:.85}
+.plate-body{padding:15px 18px;display:flex;align-items:center;gap:14px;min-width:0;flex-wrap:wrap}
+.school-sub{
+  flex-shrink:0;
+  font-size:12px;color:#5A6488;background:#E4E8F4;border-radius:6px;
+  padding:5px 10px;font-weight:600;
+}
+.plate-name{
+  font-family:Paperlogy,sans-serif;font-weight:700;font-size:20px;
+  letter-spacing:-.01em;min-width:0;flex:1;
+}
+.plate-name.empty-plan{color:#9AA3C2;font-weight:500;font-size:15px}
+.st-badge{
+  flex-shrink:0;font-size:12px;font-weight:800;border-radius:6px;padding:4px 10px;letter-spacing:.1em;
+}
+.st-badge.done{background:#DDF3E8;color:#1B7A4E}
+.st-badge.fail{background:#F8E0E0;color:#A33232}
+.plate-actions{display:flex;align-items:center;gap:8px;padding:0 14px}
+.chip{
+  border:none;border-radius:8px;cursor:pointer;font-family:inherit;
+  font-size:13px;font-weight:700;padding:9px 14px;transition:filter .2s, transform .12s;
+}
+.chip:active{transform:scale(.96)}
+.chip:focus-visible{outline:2px solid var(--plate-navy);outline-offset:2px}
+.chip-done{background:var(--green);color:#06281a}
+.chip-done:hover{filter:brightness(1.06)}
+.chip-fail{background:var(--red);color:#fff}
+.chip-fail:hover{filter:brightness(1.08)}
+.chip-undo{background:#D8DDEC;color:#3A456E}
+.lunch-row{
+  display:flex;align-items:center;gap:12px;color:var(--steel-dim);font-size:13px;
+  padding:4px 6px;letter-spacing:.08em;
+}
+.lunch-row::before,.lunch-row::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ── AI 피드백 칸 ─────────────────────────── */
+.ai-panel{
+  margin-top:40px;
+  background:var(--night-2);border:1px solid var(--line);border-radius:14px;
+  padding:22px;
+}
+.ai-panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.ai-panel-head h3{
+  font-family:Paperlogy,sans-serif;font-weight:700;font-size:18px;
+  display:flex;align-items:center;gap:10px;
+}
+.ai-panel-head h3 .spark{color:var(--amber)}
+.ai-provider-tag{
+  font-size:12px;color:var(--steel-dim);
+  border:1px solid var(--line);border-radius:20px;padding:5px 12px;
+}
+.ai-provider-tag b{color:var(--amber)}
+.ai-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.btn{
+  border:none;border-radius:8px;cursor:pointer;font-family:inherit;
+  font-size:14px;font-weight:700;padding:12px 20px;
+  transition:transform .12s, filter .2s;
+}
+.btn:active{transform:scale(.97)}
+.btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.btn-amber{background:var(--amber);color:#241a05}
+.btn-amber:hover{filter:brightness(1.08)}
+.btn-amber:disabled{opacity:.5;cursor:wait}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--steel-dim)}
+.btn-ghost:hover{border-color:var(--amber);color:var(--amber)}
+.ai-output{
+  margin-top:18px;background:var(--night);border:1px solid var(--line);border-radius:10px;
+  padding:18px 20px;font-size:14.5px;line-height:1.75;
+  display:none;
+}
+.ai-output.show{display:block}
+.ai-output.err{border-color:var(--red);color:#F0B4B4;white-space:pre-wrap}
+.ai-output p{margin:0 0 12px}
+.ai-output p:last-child{margin-bottom:0}
+.ai-output h4{
+  font-family:Paperlogy,sans-serif;font-weight:700;font-size:16px;
+  color:var(--amber);margin:0 0 12px;letter-spacing:-.01em;
+}
+.ai-output hr{border:none;border-top:1px solid var(--line);margin:16px 0}
+.ai-output strong{color:var(--amber);font-weight:700}
+.ai-table{width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:13.5px}
+.ai-table th,.ai-table td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.ai-table th{background:var(--panel);color:var(--amber);font-weight:700;font-family:Paperlogy,sans-serif;white-space:nowrap}
+.ai-table tr:nth-child(even) td{background:#ffffff06}
+.ai-loading{display:none;align-items:center;gap:10px;margin-top:18px;color:var(--steel-dim);font-size:13px}
+.ai-loading.show{display:flex}
+.ai-loading .mini-train{animation:miniRun 1.2s ease-in-out infinite}
+@keyframes miniRun{0%,100%{transform:translateX(0)}50%{transform:translateX(8px)}}
+
+/* ── 알림 팝업 (쉬는 시간) ─────────────────────────── */
+.toast-container{
+  position:fixed;top:18px;left:50%;transform:translateX(-50%);
+  z-index:200;display:flex;flex-direction:column;gap:10px;
+  align-items:center;pointer-events:none;
+}
+.toast{
+  position:relative;overflow:hidden;
+  background:var(--panel);border:1px solid var(--amber);border-radius:14px;
+  padding:18px 28px 20px;box-shadow:0 12px 40px rgba(0,0,0,.55);
+  display:flex;align-items:center;gap:14px;pointer-events:auto;
+  max-width:min(92vw,430px);
+  animation:toastIn .3s cubic-bezier(.22,1,.36,1);
+}
+.toast.leaving{animation:toastOut .3s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-10px) scale(.96)}}
+.toast .t-icon{font-size:24px;flex-shrink:0}
+.toast .t-msg{font-size:15.5px;font-weight:600;color:var(--steel);line-height:1.45}
+.toast .t-bar{
+  position:absolute;left:0;bottom:0;height:3px;width:100%;
+  background:var(--amber);border-radius:0 0 14px 14px;
+  animation:toastShrink 10s linear forwards;
+}
+@keyframes toastShrink{from{width:100%}to{width:0%}}
+@media (max-width:480px){ .toast-container{top:10px;left:12px;right:12px;transform:none;align-items:stretch} .toast{max-width:none} }
+
+/* 교시 종료 — 완성/실패 응답형 팝업 */
+.toast.action{
+  flex-direction:column;align-items:stretch;gap:12px;
+  padding:22px 24px 24px;min-width:min(88vw,360px);max-width:min(92vw,420px);
+}
+.toast.action .t-head{display:flex;align-items:center;gap:10px}
+.toast.action .t-head .t-icon{font-size:26px}
+.toast.action .t-title{font-family:Paperlogy,sans-serif;font-weight:700;font-size:17px;color:var(--amber)}
+.toast.action .t-plan{
+  font-size:15px;color:var(--steel);line-height:1.55;
+  background:var(--night);border:1px solid var(--line);border-radius:9px;
+  padding:12px 14px;
+}
+.toast.action .t-question{font-size:13.5px;color:var(--steel-dim)}
+.toast.action .t-btnrow{display:flex;gap:10px;margin-top:2px}
+.toast.action .t-btn{
+  flex:1;border:none;border-radius:10px;padding:14px 0;
+  font-family:Paperlogy,sans-serif;font-weight:700;font-size:15px;cursor:pointer;
+  transition:filter .15s, transform .1s;
+}
+.toast.action .t-btn:active{transform:scale(.96)}
+.toast.action .t-btn-done{background:var(--green);color:#06281a}
+.toast.action .t-btn-done:hover{filter:brightness(1.08)}
+.toast.action .t-btn-fail{background:var(--red);color:#fff}
+.toast.action .t-btn-fail:hover{filter:brightness(1.08)}
+.toast.action .t-dismiss{
+  position:absolute;top:12px;right:14px;background:none;border:none;
+  color:var(--steel-dim);font-size:15px;cursor:pointer;padding:4px;line-height:1;
+}
+.toast.action .t-dismiss:hover{color:var(--amber)}
+.toast.action .t-bar{animation:toastShrink 30s linear forwards}
+
+/* ── 🛠 개발자 모드 ─────────────────────────── */
+.dev-fab{
+  position:fixed;right:20px;bottom:20px;z-index:150;
+  width:48px;height:48px;border-radius:50%;
+  background:var(--panel);border:1px solid var(--line);
+  font-size:20px;cursor:pointer;
+  box-shadow:0 6px 20px rgba(0,0,0,.4);
+  transition:border-color .2s, transform .15s;
+}
+.dev-fab:hover{border-color:var(--amber);transform:scale(1.06)}
+.dev-panel{
+  display:none;position:fixed;right:20px;bottom:78px;z-index:150;
+  width:300px;max-width:calc(100vw - 40px);
+  background:var(--night-2);border:1px solid var(--amber);border-radius:14px;
+  padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.55);
+}
+.dev-panel.show{display:block;animation:modalIn .25s ease}
+.dev-panel-head{
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:Paperlogy,sans-serif;font-weight:700;font-size:14px;margin-bottom:8px;
+}
+.dev-close{background:none;border:none;color:var(--steel-dim);font-size:15px;cursor:pointer;padding:2px 6px}
+.dev-close:hover{color:var(--amber)}
+.dev-note{font-size:11px;color:var(--steel-dim);line-height:1.6;margin-bottom:14px}
+.dev-row{margin-bottom:12px}
+.dev-row label{display:block;font-size:11px;letter-spacing:.1em;color:var(--steel-dim);margin-bottom:6px}
+.dev-row input, .dev-row select{
+  width:100%;background:var(--night);border:1px solid var(--line);border-radius:8px;
+  color:var(--steel);padding:9px 10px;font-size:14px;font-family:inherit;outline:none;
+}
+.dev-row input:focus, .dev-row select:focus{border-color:var(--amber)}
+.dev-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dev-days button{
+  padding:8px 0;font-size:12px;border-radius:6px;border:1px solid var(--line);
+  background:var(--night);color:var(--steel-dim);cursor:pointer;
+}
+.dev-days button.active{background:var(--amber);border-color:var(--amber);color:#241a05;font-weight:700}
+.dev-actions{display:flex;gap:8px;margin-top:4px}
+.dev-actions .btn{flex:1;padding:9px 0;font-size:13px}
+.dev-quick{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.dev-quick-label{font-size:11px;letter-spacing:.1em;color:var(--steel-dim);display:block;margin-bottom:8px}
+.dev-quick-btns{display:flex;flex-direction:column;gap:6px}
+.dev-quick-btns button{
+  background:var(--night);border:1px solid var(--line);border-radius:8px;
+  color:var(--steel);font-size:12.5px;padding:8px 10px;cursor:pointer;text-align:left;
+}
+.dev-quick-btns button:hover{border-color:var(--amber);color:var(--amber)}
+
+/* ── 계획 세우기 뷰 ─────────────────────────── */
+.plan-head{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  flex-wrap:wrap;margin:26px 0 18px;
+}
+.plan-head h2{font-family:Paperlogy,sans-serif;font-weight:700;font-size:22px}
+.plan-head .hint{color:var(--steel-dim);font-size:13px;line-height:1.6}
+.day-tabs{display:flex;gap:6px}
+.day-tab{
+  border:1px solid var(--line);background:var(--night-2);color:var(--steel-dim);
+  font-family:Paperlogy,sans-serif;font-weight:600;font-size:14px;
+  width:44px;height:40px;border-radius:8px;cursor:pointer;
+  transition:border-color .2s,color .2s,background .2s;
+}
+.day-tab.active{background:var(--amber);border-color:var(--amber);color:#241a05}
+.day-tab.today:not(.active){border-color:var(--amber);color:var(--amber)}
+.day-tab:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.plan-rows{display:flex;flex-direction:column;gap:10px}
+.plan-row{
+  display:grid;grid-template-columns:150px 170px 1fr;gap:0;
+  background:var(--night-2);border:1px solid var(--line);border-radius:10px;
+  overflow:hidden;align-items:stretch;
+}
+.plan-cell{padding:14px 16px;display:flex;flex-direction:column;justify-content:center;gap:3px}
+.plan-cell.time{border-right:1px solid var(--line)}
+.plan-cell.time .p-num{font-family:Paperlogy,sans-serif;font-weight:700;font-size:16px}
+.plan-cell.time .p-tm{font-size:12px;color:var(--steel-dim);font-variant-numeric:tabular-nums}
+.plan-cell.school{border-right:1px solid var(--line)}
+.plan-cell.school .p-sub{font-weight:700;font-size:15px}
+.plan-cell.school .p-meta{font-size:11px;color:var(--steel-dim)}
+.plan-cell.input-cell{padding:10px 12px}
+.plan-cell input{
+  width:100%;height:100%;
+  background:var(--night);border:1px solid var(--line);border-radius:8px;
+  color:var(--steel);padding:11px 14px;font-size:15px;font-family:inherit;
+  outline:none;transition:border-color .2s;
+}
+.plan-cell input:focus{border-color:var(--amber)}
+.plan-cell input::placeholder{color:#5A6488}
+.plan-row.lunch-plan{grid-template-columns:1fr;background:transparent;border-style:dashed}
+.plan-row.lunch-plan .plan-cell{
+  flex-direction:row;align-items:center;gap:10px;color:var(--steel-dim);font-size:13px;letter-spacing:.06em;
+}
+.weekend-note{margin-top:14px;color:var(--steel-dim);font-size:13px}
+
+/* ── AI 설정 뷰 ─────────────────────────── */
+.settings-panel{
+  margin-top:26px;max-width:680px;
+  background:var(--night-2);border:1px solid var(--line);border-radius:14px;
+  padding:28px;
+}
+.settings-panel h2{font-family:Paperlogy,sans-serif;font-weight:700;font-size:22px;margin-bottom:6px}
+.settings-panel .desc{color:var(--steel-dim);font-size:14px;margin-bottom:24px;line-height:1.7}
+.provider-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
+.pcard{
+  border:1px solid var(--line);background:var(--night);border-radius:10px;
+  padding:16px 14px;cursor:pointer;text-align:left;color:var(--steel);
+  font-family:inherit;transition:border-color .2s, box-shadow .2s;
+}
+.pcard .pname{font-family:Paperlogy,sans-serif;font-weight:700;font-size:16px;margin-bottom:4px}
+.pcard .pdesc{font-size:12px;color:var(--steel-dim);line-height:1.5}
+.pcard.active{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber), 0 0 16px #F5B84133}
+.pcard:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.field{margin-bottom:20px}
+.field label{display:block;font-size:12px;letter-spacing:.14em;color:var(--steel-dim);margin-bottom:8px}
+.field input{
+  width:100%;
+  background:var(--night);border:1px solid var(--line);border-radius:8px;
+  color:var(--steel);padding:13px 15px;font-size:15px;font-family:inherit;
+  outline:none;transition:border-color .2s;
+}
+.field input:focus{border-color:var(--amber)}
+.field input::placeholder{color:#5A6488}
+.field .subnote{font-size:12px;color:var(--steel-dim);margin-top:8px;line-height:1.6}
+
+/* ── 동기화 설정 모달 ─────────────────────────── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;
+  align-items:center;justify-content:center;backdrop-filter:blur(4px);
+}
+.modal-overlay.show{display:flex}
+.modal-box{
+  background:var(--night-2);border:1px solid var(--amber);border-radius:14px;
+  padding:28px;max-width:500px;width:90%;
+  animation:modalIn .3s ease;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
+.modal-box h3{
+  font-family:Paperlogy,sans-serif;font-weight:700;font-size:20px;margin-bottom:6px;
+}
+.modal-box .mdesc{color:var(--steel-dim);font-size:13px;line-height:1.7;margin-bottom:20px}
+.modal-box .link-hint{
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:12px 14px;font-size:12px;color:var(--steel);margin-bottom:16px;
+  font-family:'Courier New',monospace;word-break:break-all;
+}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions .btn{flex:1}
+
+/* ── 숫자 키패드 ─────────────────────────── */
+.pin-display{
+  display:flex;justify-content:center;align-items:center;gap:12px;
+  min-height:34px;margin:6px 0 18px;
+}
+.pin-display .pin-hint{font-size:13px;color:var(--steel-dim)}
+.pin-display i{
+  width:13px;height:13px;border-radius:50%;
+  background:var(--amber);box-shadow:0 0 8px var(--amber);
+  animation:dotIn .15s ease;
+}
+@keyframes dotIn{from{transform:scale(.4)}to{transform:scale(1)}}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.key{
+  padding:16px 0;font-size:20px;
+  font-family:Paperlogy,sans-serif;font-weight:700;
+  background:var(--night);border:1px solid var(--line);border-radius:10px;
+  color:var(--steel);cursor:pointer;
+  transition:transform .1s, border-color .2s, filter .2s;
+}
+.key:hover{border-color:var(--amber)}
+.key:active{transform:scale(.94)}
+.key:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.key-back{font-size:17px;color:var(--steel-dim)}
+.key-confirm{background:var(--amber);border-color:var(--amber);color:#241a05;font-size:16px}
+.key-confirm:hover{filter:brightness(1.08)}
+
+@media (max-width:760px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .station-tick .tick-label{display:none}
+  .track-hero{padding:80px 0 40px}
+  .plate{grid-template-columns:1fr}
+  .plate-actions{padding:0 14px 14px;justify-content:flex-end}
+  .plan-row{grid-template-columns:1fr}
+  .plan-cell.time,.plan-cell.school{border-right:none;border-bottom:1px solid var(--line)}
+  .run-info{gap:14px}
+  .tabs{width:100%}
+  .tab{flex:1;justify-content:center;padding:10px 8px;font-size:14px}
+  .provider-cards{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- 🛠 개발자 모드 (테스트용 시간 조작) -->
+<button class="dev-fab" id="devToggleBtn" title="개발자 모드 — 시간 조작">🛠</button>
+<div class="dev-panel" id="devPanel">
+  <div class="dev-panel-head">
+    <span>🛠 개발자 모드 — 시간 조작</span>
+    <button class="dev-close" id="devCloseBtn">✕</button>
+  </div>
+  <p class="dev-note">테스트 전용입니다. 여기서 바꾼 시간은 이 브라우저 화면에만 적용되고, 저장되는 계획 데이터에는 영향이 없습니다.</p>
+
+  <div class="dev-row">
+    <label>요일</label>
+    <div class="dev-days" id="devDays">
+      <button data-d="1">월</button>
+      <button data-d="2">화</button>
+      <button data-d="3">수</button>
+      <button data-d="4">목</button>
+      <button data-d="5">금</button>
+      <button data-d="6">토</button>
+      <button data-d="0">일</button>
+    </div>
+  </div>
+  <div class="dev-row">
+    <label>시각</label>
+    <input type="time" id="devTimeInput" value="08:05">
+  </div>
+  <div class="dev-row">
+    <label>배속</label>
+    <select id="devSpeedSelect">
+      <option value="1">1배 (실제 속도)</option>
+      <option value="10">10배</option>
+      <option value="60" selected>60배 — 1초=1분</option>
+      <option value="600">600배 — 1초=10분</option>
+    </select>
+  </div>
+  <div class="dev-actions">
+    <button class="btn btn-amber" id="devApplyBtn">이 시각으로 이동</button>
+    <button class="btn btn-ghost" id="devResetBtn">실제 시각으로</button>
+  </div>
+
+  <div class="dev-quick">
+    <span class="dev-quick-label">바로가기</span>
+    <div class="dev-quick-btns">
+      <button data-preset="p1">1교시 종료 1분 전</button>
+      <button data-preset="lunch">점심시간 1분 전</button>
+      <button data-preset="last">종착 1분 전</button>
+    </div>
+  </div>
+</div>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="line-badge">
+        <span class="dot"></span>
+        <h1>오늘의 <em>공부 급행</em></h1>
+      </div>
+      <div style="color:var(--steel-dim);font-size:13px;margin-top:6px;letter-spacing:.04em" id="dateLine"></div>
+    </div>
+    <div class="run-info">
+      <div><span class="lbl">현재 시각</span><b id="clock">--:--</b></div>
+      <div><span class="lbl">운행률</span><b id="pct">0%</b></div>
+    </div>
+    <div class="sync-widget">
+      <span class="sync-dot off" id="syncDot"></span>
+      <button class="btn btn-ghost" id="syncBtn" style="padding: 8px 12px; font-size: 13px;">동기화 설정</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-view="dash" role="tab" aria-selected="true"><span class="signal"></span>운행 대시보드</button>
+    <button class="tab" data-view="plan" role="tab" aria-selected="false"><span class="signal"></span>계획 세우기</button>
+    <button class="tab" data-view="ai" role="tab" aria-selected="false"><span class="signal"></span>AI 피드백 설정</button>
+  </nav>
+
+  <!-- ═══ 뷰 1: 운행 대시보드 ═══ -->
+  <section class="view active" id="view-dash">
+
+    <div class="track-hero" id="trackHero">
+      <div class="dawn"></div>
+      <div class="speedlines"><i></i><i></i><i></i><i></i></div>
+      <div class="depart">
+        <div class="flag">08:10 출발</div>
+        <div class="sub">DEPARTURE</div>
+      </div>
+      <div class="terminus">
+        <div class="flag">16:00 종착</div>
+        <div class="sub">TERMINUS</div>
+      </div>
+      <div class="rail" id="rail">
+        <div class="rail-fill" id="railFill"></div>
+        <div class="train" id="train">
+          <div class="headlight"></div>
+          <svg width="86" height="30" viewBox="0 0 86 30" aria-hidden="true">
+            <path d="M4 24 L4 10 Q4 6 8 6 L58 6 Q70 6 80 16 L84 22 Q85 24 82 24 Z" fill="#1E2A52" stroke="#3A4A80" stroke-width="1.5"/>
+            <rect x="10" y="10" width="9" height="7" rx="1.5" fill="#F5B841"/>
+            <rect x="23" y="10" width="9" height="7" rx="1.5" fill="#F5B841"/>
+            <rect x="36" y="10" width="9" height="7" rx="1.5" fill="#F5B841"/>
+            <rect x="49" y="10" width="9" height="7" rx="1.5" fill="#FFDFa0"/>
+            <circle cx="78" cy="19" r="2.5" fill="#FFE9B8"/>
+            <circle cx="16" cy="26" r="3.5" fill="#0A0F22" stroke="#5A6488" stroke-width="1.5"/>
+            <circle cx="34" cy="26" r="3.5" fill="#0A0F22" stroke="#5A6488" stroke-width="1.5"/>
+            <circle cx="58" cy="26" r="3.5" fill="#0A0F22" stroke="#5A6488" stroke-width="1.5"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div class="run-status" id="runStatus"></div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">현재 구간</div><div class="v" id="stNow" style="font-size:17px;line-height:1.4">—</div></div>
+      <div class="stat"><div class="k">완성</div><div class="v green" id="stDone">0<small>교시</small></div></div>
+      <div class="stat"><div class="k">실패</div><div class="v red" id="stFail">0<small>교시</small></div></div>
+      <div class="stat"><div class="k">종착까지</div><div class="v" id="stLeft">—</div></div>
+    </div>
+
+    <div class="section-title" id="stationsTitle">오늘의 운행 구간 · PERIODS</div>
+    <div class="stations" id="stations"></div>
+
+    <div class="ai-panel">
+      <div class="ai-panel-head">
+        <h3><span class="spark">✦</span> AI 피드백</h3>
+        <span class="ai-provider-tag" id="aiTag">엔진: <b>미설정</b></span>
+      </div>
+      <p style="color:var(--steel-dim);font-size:13px;margin-top:8px;line-height:1.7">
+        오늘의 계획과 완성/실패 기록을 기관사(AI)에게 보내 운행 평가를 받습니다.
+        먼저 [AI 피드백 설정] 탭에서 엔진과 API 키를 등록하세요.
+      </p>
+      <div class="ai-actions">
+        <button class="btn btn-amber" id="aiFeedbackBtn">오늘 운행 피드백 받기</button>
+        <button class="btn btn-ghost" id="aiPlanBtn">내일 계획 제안 받기</button>
+      </div>
+      <div class="ai-loading" id="aiLoading"><span class="mini-train">🚄</span> 기관사가 운행 일지를 검토하는 중…</div>
+      <div class="ai-output" id="aiOutput"></div>
+    </div>
+
+  </section>
+
+  <!-- ═══ 뷰 2: 계획 세우기 ═══ -->
+  <section class="view" id="view-plan">
+    <div class="plan-head">
+      <div>
+        <h2>주간 운행 계획</h2>
+        <p class="hint">학교 수업 시간표에 맞춰, 그 시간에 실제로 달릴 내 공부를 적어두세요.<br>GitHub에 자동 저장되어 iPad에서도 계속됩니다.</p>
+      </div>
+      <div class="day-tabs" id="dayTabs"></div>
+    </div>
+    <div class="plan-rows" id="planRows"></div>
+    <div class="weekend-note" id="weekendNote"></div>
+  </section>
+
+  <!-- ═══ 뷰 3: AI 피드백 설정 ─── -->
+  <section class="view" id="view-ai">
+    <div class="settings-panel">
+      <h2>AI 피드백 기능 설정</h2>
+      <p class="desc" id="aiSyncNote">
+        피드백을 생성할 AI 엔진을 고르고 API 키를 입력하세요.
+        접속 비밀번호로 잠금 해제된 상태라면, 이 키도 같은 비밀번호로 암호화되어 GitHub에 자동 동기화됩니다 — 다른 기기에서도 비밀번호만 입력하면 그대로 불러와집니다.
+      </p>
+
+      <div class="provider-cards" id="providerCards">
+        <button class="pcard" data-provider="anthropic">
+          <div class="pname">Anthropic Claude</div>
+          <div class="pdesc">claude.ai 아티팩트에서는 키 없이도 동작합니다</div>
+        </button>
+        <button class="pcard" data-provider="openai">
+          <div class="pname">OpenAI GPT</div>
+          <div class="pdesc">sk-… 형식의 API 키 필요</div>
+        </button>
+        <button class="pcard" data-provider="gemini">
+          <div class="pname">Google Gemini</div>
+          <div class="pdesc">AI Studio에서 발급한 키 필요</div>
+        </button>
+      </div>
+
+      <div class="field">
+        <label for="modelInput">모델</label>
+        <input id="modelInput" type="text" placeholder="모델명">
+        <div class="subnote" id="modelNote"></div>
+      </div>
+
+      <div class="field">
+        <label for="keyInput">API 키</label>
+        <input id="keyInput" type="password" placeholder="API 키 입력" autocomplete="off">
+        <div class="subnote" id="keyNote"></div>
+      </div>
+
+      <button class="btn btn-amber" id="testBtn">연결 테스트</button>
+    </div>
+  </section>
+
+</div>
+
+<!-- 접속 비밀번호 팝업 (숫자 키패드) -->
+<div class="modal-overlay" id="pinModal">
+  <div class="modal-box" style="max-width:360px">
+    <h3 style="text-align:center">🔐 승차권 확인</h3>
+    <p class="mdesc" style="text-align:center">비밀번호를 입력하면 자동 동기화가 시작됩니다</p>
+    <div class="pin-display" id="pinDisplay"><span class="pin-hint">비밀번호 입력</span></div>
+    <div class="keypad">
+      <button class="key" data-k="1">1</button>
+      <button class="key" data-k="2">2</button>
+      <button class="key" data-k="3">3</button>
+      <button class="key" data-k="4">4</button>
+      <button class="key" data-k="5">5</button>
+      <button class="key" data-k="6">6</button>
+      <button class="key" data-k="7">7</button>
+      <button class="key" data-k="8">8</button>
+      <button class="key" data-k="9">9</button>
+      <button class="key key-back" data-k="back">⌫</button>
+      <button class="key" data-k="0">0</button>
+      <button class="key key-confirm" data-k="ok">탑승</button>
+    </div>
+    <div id="pinResult" style="margin-top:14px;font-size:13px;text-align:center;display:none"></div>
+    <button class="btn btn-ghost" id="skipBtn" style="width:100%;margin-top:16px">그냥 이용하기</button>
+  </div>
+</div>
+
+<!-- 동기화 설정 모달 (최초 세팅용) -->
+<div class="modal-overlay" id="setupModal">
+  <div class="modal-box">
+    <h3>⚙️ 동기화 설정 (최초 1회)</h3>
+    <p class="mdesc">
+      ① gist.github.com에서 <b>studyplan.json</b> 파일로 Gist 생성 →
+      ② github.com/settings/tokens/new에서 <b>gist 권한만</b> 체크한 토큰 발급 →
+      ③ 아래에 입력하고 생성 버튼 →
+      ④ 결과를 저장소(<b id="repoLabel" style="color:var(--amber)"></b>)의 <b>.config.json</b> 파일로 커밋.
+    </p>
+    <div class="field">
+      <label for="genGistId">Gist ID</label>
+      <input id="genGistId" type="text" placeholder="a1b2c3d4e5f6..." autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="genToken">GitHub 토큰 (gist 권한)</label>
+      <input id="genToken" type="password" placeholder="ghp_..." autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="genPw">암호화 비밀번호 — 숫자만</label>
+      <input id="genPw" type="password" placeholder="예: 483920 (키패드로 입력할 번호)" autocomplete="off" inputmode="numeric">
+      <div class="subnote">접속 팝업이 숫자 키패드이므로 반드시 숫자로만 정하세요.</div>
+    </div>
+    <div class="modal-actions" style="margin-top:0">
+      <button class="btn btn-ghost" id="genBtn" type="button">암호화 파일 내용 생성</button>
+      <button class="btn btn-ghost" id="genCopyBtn" type="button" style="display:none">복사</button>
+    </div>
+    <textarea id="genOut" readonly
+      style="display:none;width:100%;margin-top:14px;min-height:110px;background:var(--night);border:1px solid var(--line);border-radius:8px;color:var(--steel);padding:12px;font-size:12px;font-family:'Courier New',monospace;resize:vertical"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="reopenPinBtn">비밀번호 입력 열기</button>
+      <button class="btn btn-ghost" id="closeSetupBtn">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ★★★ 배포 전에 딱 한 번, 본인 것으로 수정하세요 ★★★
+   .config.json 파일이 들어있는 GitHub 저장소 (예: 'wjb-study/study-express') */
+const CONFIG_REPO = 'YOUR_GITHUB_ID/YOUR_REPO';
+
+/* ─────────── [개발자 모드] 시간 조작 ─────────── */
+let devBaseRealMs = Date.now();
+let devBaseFakeMs = Date.now();
+let devSpeed = 1;              // 1=정상 속도, 60=1초에 1분씩 빨리감기
+let devActive = false;
+function fakeNow(){ return new Date(devBaseFakeMs + (Date.now() - devBaseRealMs) * devSpeed); }
+
+/* ─────────── 시간표 데이터 ─────────── */
+const DAYS = ['월','화','수','목','금'];
+const PERIODS = [
+  {n:1, s:'08:10', e:'09:00'},
+  {n:2, s:'09:10', e:'10:00'},
+  {n:3, s:'10:10', e:'11:00'},
+  {n:4, s:'11:10', e:'12:00'},
+  {n:5, s:'13:10', e:'14:00'},
+  {n:6, s:'14:10', e:'15:00'},
+  {n:7, s:'15:10', e:'16:00'},
+];
+const LUNCH = {s:'12:00', e:'13:10'};
+function toMin(hhmm){ const [h,m]=hhmm.split(':').map(Number); return h*60+m; }
+const DAY_START = toMin('08:10'), DAY_END = toMin('16:00');
+const DAY_TOTAL = DAY_END - DAY_START;
+
+const TT = {
+  '월': [
+    {sub:'대수',    meta:'203 · 정주식'},
+    {sub:'생명(W)', meta:'B204 · 지영득'},
+    {sub:'스과',    meta:'203 · 손준호'},
+    {sub:'현윤(X)', meta:'A201 · 서순교'},
+    {sub:'문학',    meta:'203 · 박현석'},
+    {sub:'미술',    meta:'203 · 김관섭'},
+    {sub:'기하(Y)', meta:'A206 · 이동욱'},
+  ],
+  '화': [
+    {sub:'영Ⅰ B',  meta:'203 · 정한나'},
+    {sub:'영Ⅰ A',  meta:'203 · 남중권'},
+    {sub:'기하(Y)', meta:'A206 · 이동욱'},
+    {sub:'문학',    meta:'203 · 박현석'},
+    {sub:'생명(W)', meta:'B204 · 지영득'},
+    {sub:'미술',    meta:'203 · 김관섭'},
+    {sub:'대수',    meta:'203 · 정주식'},
+  ],
+  '수': [
+    {sub:'현윤(X)', meta:'A201 · 서순교'},
+    {sub:'대수',    meta:'203 · 정주식'},
+    {sub:'영Ⅰ A',  meta:'203 · 남중권'},
+    {sub:'기하(Y)', meta:'A206 · 이동욱'},
+    {sub:'스과',    meta:'203 · 손준호'},
+    {sub:'화학(Z)', meta:'A207 · 권유경'},
+    {sub:'중문(O)', meta:'202 · 김재현'},
+  ],
+  '목': [
+    {sub:'창정',    meta:'203 · 여승철'},
+    {sub:'영Ⅰ B',  meta:'203 · 정한나'},
+    {sub:'생명(W)', meta:'B204 · 지영득'},
+    {sub:'중문(O)', meta:'202 · 김재현'},
+    {sub:'대수',    meta:'203 · 정주식'},
+    {sub:'화학(Z)', meta:'A207 · 권유경'},
+    {sub:'문학',    meta:'203 · 박현석'},
+  ],
+  '금': [
+    {sub:'현윤(X)', meta:'A201 · 서순교'},
+    {sub:'중문(O)', meta:'202 · 김재현'},
+    {sub:'문학',    meta:'203 · 박현석'},
+    {sub:'화학(Z)', meta:'A207 · 권유경'},
+    {sub:'창의적 체험활동', meta:''},
+    {sub:'창의적 체험활동', meta:''},
+    null,
+  ],
+};
+
+const plans = {}, results = {};
+DAYS.forEach(d=>{ plans[d]=['','','','','','','']; results[d]=[null,null,null,null,null,null,null]; });
+
+/* ─────────── 동기화 설정 ─────────── */
+const gistConfig = {enabled:false, gistId:'', token:''};
+let syncTimeout, syncUpdateTimeout;
+
+function getCurrentWeek(){
+  const today = new Date();
+  const year = today.getFullYear();
+  const firstDay = new Date(year, 0, 1);
+  const week = Math.ceil(((today - firstDay) / (7 * 24 * 60 * 60 * 1000)) + 1);
+  return `${year}_W${String(week).padStart(2,'0')}`;
+}
+
+async function loadFromGist(){
+  if(!gistConfig.enabled || !gistConfig.gistId) return false;
+  try{
+    const headers = {'Accept':'application/vnd.github.v3+json'};
+    if(gistConfig.token) headers['Authorization'] = `token ${gistConfig.token}`;
+    const res = await fetch(`https://api.github.com/gists/${gistConfig.gistId}?t=${Date.now()}`, {headers, cache:'no-store'});
+    if(!res.ok) throw new Error('Gist 로드 실패 (HTTP ' + res.status + ')');
+    const gist = await res.json();
+    const content = gist.files['studyplan.json']?.content;
+    if(content){
+      try{
+        const data = JSON.parse(content);
+        if(data.plans) Object.assign(plans, data.plans);
+        if(data.results) Object.assign(results, data.results);
+      }catch(e){ /* 최초의 {} 등 형식이 다르면 무시 */ }
+    }
+    updateSyncDot('ready');
+    /* ★ 받아온 데이터를 화면에 반영 */
+    if(typeof renderStations === 'function'){ renderStations(); renderPlanRows(); }
+    return true;
+  }catch(err){
+    console.error('Gist 로드:', err);
+    updateSyncDot('error');
+    return false;
+  }
+}
+
+let lastLocalEdit = 0;
+async function saveToGist(){
+  if(!gistConfig.enabled || !gistConfig.gistId || !gistConfig.token) return;
+  lastLocalEdit = Date.now();
+  updateSyncDot('syncing');
+
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async ()=>{
+    try{
+      const data = {plans, results, week:getCurrentWeek(), lastSync:new Date().toISOString()};
+      const res = await fetch(`https://api.github.com/gists/${gistConfig.gistId}`, {
+        method:'PATCH',
+        headers:{
+          'Authorization':`token ${gistConfig.token}`,
+          'Accept':'application/vnd.github.v3+json',
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({files:{'studyplan.json':{content:JSON.stringify(data,null,2)}}})
+      });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      updateSyncDot('ready');
+    }catch(err){
+      console.error('Gist 저장:', err);
+      updateSyncDot('error');
+    }
+  }, 800);
+}
+
+/* 다른 기기의 변경사항을 주기적으로 당겨오기 (내가 방금 수정 중이 아닐 때만) */
+setInterval(()=>{
+  if(gistConfig.enabled && Date.now() - lastLocalEdit > 90000){
+    loadFromGist();
+  }
+}, 60000);
+
+function updateSyncDot(status){
+  const dot = document.getElementById('syncDot');
+  dot.className = 'sync-dot ' + status;
+}
+
+/* ─────────── 비밀번호 잠금 해제 (키패드) ─────────── */
+let pin = '';
+function renderPinDisplay(){
+  const d = $('pinDisplay');
+  if(!pin.length){
+    d.innerHTML = '<span class="pin-hint">비밀번호 입력</span>';
+  } else {
+    d.innerHTML = pin.split('').map(()=> '<i></i>').join('');
+  }
+}
+function showPinMsg(text, ok){
+  const r = $('pinResult');
+  r.style.display = 'block';
+  r.textContent = text;
+  r.style.color = ok ? 'var(--green)' : 'var(--red)';
+}
+
+async function unlock(password){
+  if(CONFIG_REPO.includes('YOUR_')){
+    showPinMsg('CONFIG_REPO를 본인 저장소로 수정한 뒤 배포하세요', false);
+    return;
+  }
+  if(!password){ showPinMsg('비밀번호를 입력하세요', false); return; }
+  showPinMsg('확인 중…', true);
+  try{
+    let response = null;
+    for(const branch of ['main','master']){
+      const url = `https://raw.githubusercontent.com/${CONFIG_REPO}/${branch}/.config.json?t=${Date.now()}`;
+      response = await fetch(url, {cache:'no-store'});
+      if(response.ok) break;
+    }
+    if(!response || !response.ok) throw new Error('설정 파일(.config.json)을 찾을 수 없습니다');
+
+    const data = await response.json();
+    let decrypted = '';
+    try{
+      decrypted = CryptoJS.AES.decrypt(data.encrypted, password).toString(CryptoJS.enc.Utf8);
+    }catch(e){ decrypted = ''; }
+    if(!decrypted) throw new Error('비밀번호가 틀렸습니다');
+
+    const config = JSON.parse(decrypted);
+    gistConfig.gistId = config.gistId;
+    gistConfig.token = config.token;
+    gistConfig.enabled = true;
+
+    const loaded = await loadFromGist();
+    if(!loaded) throw new Error('데이터 로드 실패 — Gist ID를 확인하세요');
+
+    sessionPassword = password;
+    await loadAIConfig();
+
+    showPinMsg('✓ 탑승 완료! 자동 동기화 중', true);
+    setTimeout(()=>{ $('pinModal').classList.remove('show'); }, 900);
+  }catch(err){
+    showPinMsg('✕ ' + err.message, false);
+    pin = '';
+    renderPinDisplay();
+  }
+}
+
+/* 키패드 입력 */
+document.querySelector('.keypad').addEventListener('click', e=>{
+  const key = e.target.closest('.key');
+  if(!key) return;
+  const k = key.dataset.k;
+  if(k === 'back'){ pin = pin.slice(0, -1); }
+  else if(k === 'ok'){ unlock(pin); return; }
+  else if(pin.length < 20){ pin += k; }
+  renderPinDisplay();
+});
+/* 물리 키보드도 지원 */
+document.addEventListener('keydown', e=>{
+  if(!$('pinModal').classList.contains('show')) return;
+  if(/^[0-9]$/.test(e.key) && pin.length < 20){ pin += e.key; renderPinDisplay(); }
+  else if(e.key === 'Backspace'){ pin = pin.slice(0, -1); renderPinDisplay(); }
+  else if(e.key === 'Enter'){ unlock(pin); }
+});
+$('skipBtn').addEventListener('click', ()=>$('pinModal').classList.remove('show'));
+
+/* ─────────── 설정 모달 열기/닫기 ─────────── */
+$('syncBtn').addEventListener('click', ()=>$('setupModal').classList.add('show'));
+$('closeSetupBtn').addEventListener('click', ()=>$('setupModal').classList.remove('show'));
+$('reopenPinBtn').addEventListener('click', ()=>{
+  $('setupModal').classList.remove('show');
+  pin = ''; renderPinDisplay();
+  $('pinResult').style.display = 'none';
+  $('pinModal').classList.add('show');
+});
+
+/* ─────────── 설정 파일 생성기 ─────────── */
+$('genBtn').addEventListener('click', ()=>{
+  const gistId = $('genGistId').value.trim();
+  const token = $('genToken').value.trim();
+  const pw = $('genPw').value;
+  const out = $('genOut');
+  if(!gistId || !token || !pw){
+    out.style.display = 'block';
+    out.value = 'Gist ID, 토큰, 비밀번호를 모두 입력하세요.';
+    return;
+  }
+  if(!/^[0-9]+$/.test(pw)){
+    out.style.display = 'block';
+    out.value = '비밀번호는 숫자로만 정해주세요. 접속 팝업이 숫자 키패드입니다.';
+    return;
+  }
+  const encrypted = CryptoJS.AES.encrypt(JSON.stringify({gistId, token}), pw).toString();
+  out.value = JSON.stringify({encrypted}, null, 2);
+  out.style.display = 'block';
+  $('genCopyBtn').style.display = 'inline-block';
+});
+$('genCopyBtn').addEventListener('click', async ()=>{
+  const out = $('genOut');
+  out.select();
+  try{
+    await navigator.clipboard.writeText(out.value);
+    $('genCopyBtn').textContent = '복사됨 ✓';
+  }catch(e){
+    document.execCommand('copy');
+    $('genCopyBtn').textContent = '복사됨 ✓';
+  }
+  setTimeout(()=>{ $('genCopyBtn').textContent = '복사'; }, 1800);
+});
+
+/* ─────────── 유틸 ─────────── */
+function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function nowMin(){ const n=fakeNow(); return n.getHours()*60 + n.getMinutes() + n.getSeconds()/60; }
+
+const KDAYS = ['일','월','화','수','목','금','토'];
+let today, dayIdx, isWeekend, todayKey, planDay;
+
+function recalcDayContext(){
+  today = fakeNow();
+  dayIdx = today.getDay();
+  isWeekend = (dayIdx===0 || dayIdx===6);
+  todayKey = isWeekend ? '월' : DAYS[dayIdx-1];
+  planDay = todayKey;
+  $('dateLine').innerHTML = `${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 (${KDAYS[dayIdx]}) 운행편`
+    + (isWeekend ? ' · 주말 — 월요일 노선 미리보기' : '')
+    + (devActive ? ' <span style="color:var(--amber)">· 🛠 개발자 모드</span>' : '');
+}
+recalcDayContext();
+
+/* ─────────── 탭 전환 ─────────── */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('active'); t.setAttribute('aria-selected','false')});
+    tab.classList.add('active'); tab.setAttribute('aria-selected','true');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    $('view-' + tab.dataset.view).classList.add('active');
+  });
+});
+
+/* ─────────── 시계 & 자동 운행 ─────────── */
+function tickClock(){
+  const n = fakeNow();
+  $('clock').textContent = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+}
+function currentSegment(){
+  const m = nowMin();
+  if(isWeekend) return {type:'weekend'};
+  if(m < DAY_START) return {type:'before'};
+  if(m >= DAY_END) return {type:'after'};
+  for(const p of PERIODS){
+    if(m >= toMin(p.s) && m < toMin(p.e)) return {type:'period', p};
+  }
+  if(m >= toMin(LUNCH.s) && m < toMin(LUNCH.e)) return {type:'lunch'};
+  return {type:'break'};
+}
+function updateTrain(){
+  const m = nowMin();
+  let pct;
+  if(isWeekend || m < DAY_START) pct = 0;
+  else if(m >= DAY_END) pct = 100;
+  else pct = (m - DAY_START) / DAY_TOTAL * 100;
+
+  $('railFill').style.width = pct + '%';
+  $('train').style.left = pct + '%';
+  $('pct').textContent = Math.round(pct) + '%';
+
+  const seg = currentSegment();
+  const hero = $('trackHero');
+  const status = $('runStatus');
+  const tt = TT[todayKey];
+
+  if(seg.type==='weekend'){
+    hero.classList.remove('running');
+    status.innerHTML = '주말 — 오늘은 운행이 없습니다. <b>계획 세우기</b>에서 다음 주 노선을 준비하세요.';
+    $('stNow').textContent = '주말 · 운행 없음';
+    $('stLeft').textContent = '—';
+  } else if(seg.type==='before'){
+    hero.classList.remove('running');
+    status.innerHTML = '출발 대기 중 — <b>08:10</b>에 발차합니다.';
+    $('stNow').textContent = '출발 전';
+    $('stLeft').innerHTML = '<span style="font-size:17px">발차 전</span>';
+  } else if(seg.type==='after'){
+    hero.classList.remove('running');
+    status.innerHTML = '<b>종착역 도착.</b> 오늘의 운행이 끝났습니다. 수고했어요.';
+    $('stNow').textContent = '운행 종료';
+    $('stLeft').innerHTML = '0<small>분</small>';
+  } else {
+    hero.classList.add('running');
+    const left = Math.ceil(DAY_END - m);
+    $('stLeft').innerHTML = left + '<small>분</small>';
+    if(seg.type==='period'){
+      const sc = tt[seg.p.n-1];
+      const plan = plans[todayKey][seg.p.n-1];
+      status.innerHTML = `현재 <b>${seg.p.n}교시</b> 구간 주행 중 (${seg.p.s}–${seg.p.e})` + (plan ? ` — <b>${esc(plan)}</b>` : '');
+      $('stNow').textContent = seg.p.n + '교시' + (sc ? ' · ' + sc.sub : '');
+    } else if(seg.type==='lunch'){
+      status.innerHTML = '<b>점심 정차</b> 중 (12:00–13:10) — 급유하고 다시 달립니다.';
+      $('stNow').textContent = '점심시간';
+    } else {
+      status.innerHTML = '<b>쉬는 시간</b> — 잠시 감속 운행 중.';
+      $('stNow').textContent = '쉬는 시간';
+    }
+  }
+}
+
+/* 트랙 눈금 */
+function drawTicks(){
+  document.querySelectorAll('.station-tick').forEach(e=>e.remove());
+  const m = nowMin();
+  const tt = TT[todayKey];
+  let i = 0;
+  PERIODS.forEach(p=>{
+    if(!tt[p.n-1]) return;
+    const pos = (toMin(p.e) - DAY_START) / DAY_TOTAL * 100;
+    const tick = document.createElement('div');
+    tick.className = 'station-tick ' + (i%2===0 ? 'lab-down' : 'lab-up') + (!isWeekend && m >= toMin(p.e) ? ' passed' : '');
+    tick.style.left = pos + '%';
+    tick.innerHTML = `<span class="tick-label">${p.n} · ${esc(tt[p.n-1].sub)}</span>`;
+    $('rail').appendChild(tick);
+    i++;
+  });
+  const lp = (toMin(LUNCH.s) - DAY_START) / DAY_TOTAL * 100;
+  const lt = document.createElement('div');
+  lt.className = 'station-tick lunch lab-down';
+  lt.style.left = lp + '%';
+  $('rail').appendChild(lt);
+}
+
+/* ─────────── 알림 팝업 (토스트) ─────────── */
+function showToast(message, icon){
+  const box = $('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<span class="t-icon">${icon}</span><span class="t-msg">${esc(message)}</span><div class="t-bar"></div>`;
+  box.appendChild(el);
+  const dismiss = ()=>{
+    if(el.dataset.leaving) return;
+    el.dataset.leaving = '1';
+    el.classList.add('leaving');
+    setTimeout(()=>el.remove(), 300);
+  };
+  el.addEventListener('click', dismiss);
+  setTimeout(dismiss, 10000);
+}
+
+/* 교시 종료 시 뜨는 완성/실패 응답형 팝업 (30초 동안 유지) */
+function showAskToast(n, planText){
+  const box = $('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast action';
+  el.innerHTML = `
+    <button class="t-dismiss" aria-label="닫기">✕</button>
+    <div class="t-head"><span class="t-icon">🏁</span><span class="t-title">${n}교시 종료</span></div>
+    <div class="t-plan">${esc(planText)}</div>
+    <div class="t-question">이번 교시, 완성했나요?</div>
+    <div class="t-btnrow">
+      <button class="t-btn t-btn-done" data-act="done">완성</button>
+      <button class="t-btn t-btn-fail" data-act="fail">실패</button>
+    </div>
+    <div class="t-bar"></div>`;
+  box.appendChild(el);
+  const dismiss = ()=>{
+    if(el.dataset.leaving) return;
+    el.dataset.leaving = '1';
+    el.classList.add('leaving');
+    setTimeout(()=>el.remove(), 300);
+  };
+  el.querySelector('.t-dismiss').addEventListener('click', dismiss);
+  el.querySelectorAll('.t-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      results[todayKey][n-1] = btn.dataset.act;
+      renderStations();
+      saveToGist();
+      dismiss();
+    });
+  });
+  setTimeout(dismiss, 30000);
+}
+
+/* ─────────── 쉬는 시간 / 점심 / 교시 종료 알림 스케줄 ─────────── */
+let breakEvents = [];
+let firedBreakEvents = new Set();
+
+function buildBreakEvents(){
+  const evts = [];
+  const tt = TT[todayKey];
+  PERIODS.forEach((p, idx)=>{
+    if(tt[p.n-1]){
+      evts.push({time: toMin(p.e), type:'ask', n:p.n});
+    }
+    const next = PERIODS[idx+1];
+    if(next && tt[next.n-1]){
+      evts.push({time: toMin(next.s), type:'break-end', n:next.n});
+    }
+  });
+  evts.push({time: toMin(LUNCH.s), type:'lunch-start'});
+  evts.push({time: toMin(LUNCH.e), type:'lunch-end'});
+  return evts.sort((a,b)=>a.time - b.time);
+}
+
+function eventKey(ev){ return ev.time + '_' + ev.type + '_' + (ev.n || ''); }
+
+function initBreakNotifications(){
+  firedBreakEvents.clear();
+  if(isWeekend) return;
+  breakEvents = buildBreakEvents();
+  const now = nowMin();
+  /* 접속/재접속 시점(또는 개발자 모드로 이동한 시점) 이전에 이미 지난 이벤트는
+     전부 '발사됨'으로 처리해서 밀린 알림이 한꺼번에 쏟아지는 것을 막는다 */
+  breakEvents.forEach(ev=>{
+    if(ev.time <= now) firedBreakEvents.add(eventKey(ev));
+  });
+}
+
+function fireBreakEvent(ev){
+  if(ev.type === 'ask'){
+    const plan = plans[todayKey][ev.n-1] || '계획이 비어 있어요 — 그래도 완성/실패를 기록해 주세요';
+    showAskToast(ev.n, plan);
+  } else if(ev.type === 'break-end'){
+    showToast(`쉬는 시간 종료 — ${ev.n}교시 발차`, '🚄');
+  } else if(ev.type === 'lunch-start'){
+    showToast('점심 정차 시작 (~13:10)', '🍱');
+  } else if(ev.type === 'lunch-end'){
+    showToast('점심 정차 종료 — 재출발', '🚄');
+  }
+}
+
+function checkBreakNotifications(){
+  if(isWeekend) return;
+  const now = nowMin();
+  breakEvents.forEach(ev=>{
+    const key = eventKey(ev);
+    if(now >= ev.time && !firedBreakEvents.has(key)){
+      firedBreakEvents.add(key);
+      fireBreakEvent(ev);
+    }
+  });
+}
+
+
+
+/* ─────────── 대시보드 카드 ─────────── */
+function renderStations(){
+  const tt = TT[todayKey];
+  const seg = currentSegment();
+  const m = nowMin();
+  const box = $('stations');
+  box.innerHTML = '';
+  $('stationsTitle').textContent = (isWeekend ? '월요일 운행 구간 미리보기' : '오늘의 운행 구간') + ' · PERIODS';
+
+  PERIODS.forEach(p=>{
+    const sc = tt[p.n-1];
+    if(p.n===5){
+      const lunch = document.createElement('div');
+      lunch.className = 'lunch-row';
+      lunch.textContent = '점심 정차 12:00 – 13:10';
+      box.appendChild(lunch);
+    }
+    if(!sc) return;
+    const plan = plans[todayKey][p.n-1];
+    const res = results[todayKey][p.n-1];
+    const isNow = !isWeekend && seg.type==='period' && seg.p.n===p.n;
+    const isPast = !isWeekend && m >= toMin(p.e);
+
+    const el = document.createElement('div');
+    el.className = 'plate'
+      + (isNow ? ' now' : '')
+      + (isPast && !res ? ' past' : '')
+      + (res==='done' ? ' st-done' : res==='fail' ? ' st-fail' : '');
+    el.innerHTML = `
+      <div class="plate-band">
+        <span style="font-weight:700">${p.n}교시</span>
+        <span class="tm">${p.s} – ${p.e}</span>
+      </div>
+      <div class="plate-body">
+        <span class="school-sub">${esc(sc.sub)}${sc.meta ? ' · '+esc(sc.meta) : ''}</span>
+        ${plan ? `<span class="plate-name">${esc(plan)}</span>` : `<span class="plate-name empty-plan">계획 없음</span>`}
+        ${res==='done' ? '<span class="st-badge done">완성</span>' : ''}
+        ${res==='fail' ? '<span class="st-badge fail">실패</span>' : ''}
+      </div>
+      <div class="plate-actions">
+        ${res
+          ? `<button class="chip chip-undo" data-act="undo" data-n="${p.n}">되돌리기</button>`
+          : `<button class="chip chip-done" data-act="done" data-n="${p.n}">완성</button>
+             <button class="chip chip-fail" data-act="fail" data-n="${p.n}">실패</button>`}
+      </div>`;
+    box.appendChild(el);
+  });
+
+  const done = results[todayKey].filter(r=>r==='done').length;
+  const fail = results[todayKey].filter(r=>r==='fail').length;
+  $('stDone').innerHTML = done + '<small>교시</small>';
+  $('stFail').innerHTML = fail + '<small>교시</small>';
+}
+$('stations').addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-act]');
+  if(!btn) return;
+  results[todayKey][+btn.dataset.n - 1] = (btn.dataset.act==='undo') ? null : btn.dataset.act;
+  renderStations();
+  saveToGist();
+});
+
+/* ─────────── 계획 세우기 ─────────── */
+function renderDayTabs(){
+  const box = $('dayTabs');
+  box.innerHTML = '';
+  DAYS.forEach(d=>{
+    const b = document.createElement('button');
+    b.className = 'day-tab' + (d===planDay ? ' active' : '') + (d===todayKey && !isWeekend ? ' today' : '');
+    b.textContent = d;
+    b.addEventListener('click', ()=>{ planDay = d; renderDayTabs(); renderPlanRows(); });
+    box.appendChild(b);
+  });
+}
+function renderPlanRows(){
+  const tt = TT[planDay];
+  const box = $('planRows');
+  box.innerHTML = '';
+  PERIODS.forEach(p=>{
+    if(p.n===5){
+      const lr = document.createElement('div');
+      lr.className = 'plan-row lunch-plan';
+      lr.innerHTML = '<div class="plan-cell">🍱 점심 정차 · 12:00 – 13:10</div>';
+      box.appendChild(lr);
+    }
+    const sc = tt[p.n-1];
+    const row = document.createElement('div');
+    row.className = 'plan-row';
+    row.innerHTML = `
+      <div class="plan-cell time">
+        <span class="p-num">${p.n}교시</span>
+        <span class="p-tm">${p.s} – ${p.e}</span>
+      </div>
+      <div class="plan-cell school">
+        <span class="p-sub">${sc ? esc(sc.sub) : '수업 없음'}</span>
+        <span class="p-meta">${sc && sc.meta ? esc(sc.meta) : ''}</span>
+      </div>
+      <div class="plan-cell input-cell">
+        <input type="text" maxlength="60"
+          placeholder="${sc ? '이 시간에 달릴 공부' : '수업이 없는 시간'}"
+          value="${esc(plans[planDay][p.n-1])}" data-n="${p.n}">
+      </div>`;
+    box.appendChild(row);
+  });
+  $('weekendNote').textContent = (planDay===todayKey && !isWeekend)
+    ? '✓ 지금 보고 있는 요일이 오늘입니다. 입력하면 대시보드에 바로 반영되고 GitHub에 자동 저장됩니다.'
+    : '';
+}
+$('planRows').addEventListener('input', e=>{
+  const inp = e.target.closest('input[data-n]');
+  if(!inp) return;
+  plans[planDay][+inp.dataset.n - 1] = inp.value;
+  if(planDay===todayKey) renderStations();
+  saveToGist();
+});
+
+/* ─────────── AI 설정 (비밀번호로 동기화) ─────────── */
+const AI_DEFAULTS = {
+  anthropic: {model:'claude-sonnet-4-6', modelNote:'예: claude-sonnet-4-6'},
+  openai:    {model:'gpt-4o-mini', modelNote:'예: gpt-4o-mini'},
+  gemini:    {model:'gemini-2.0-flash', modelNote:'예: gemini-2.0-flash'},
+};
+const aiConfig = {provider:'anthropic', model:AI_DEFAULTS.anthropic.model, keys:{anthropic:'', openai:'', gemini:''}};
+let sessionPassword = '';       // 잠금 해제에 쓴 비밀번호 — AI 키 암복호화에 재사용
+let aiSaveTimeout = null;
+
+function renderAISettings(){
+  document.querySelectorAll('.pcard').forEach(c=>{ c.classList.toggle('active', c.dataset.provider===aiConfig.provider); });
+  const def = AI_DEFAULTS[aiConfig.provider];
+  $('modelInput').value = aiConfig.model;
+  $('modelNote').textContent = def.modelNote;
+  $('keyInput').value = aiConfig.keys[aiConfig.provider];
+  updateAITag();
+  updateAiSyncNote();
+}
+function updateAiSyncNote(){
+  const note = $('aiSyncNote');
+  if(!note) return;
+  note.innerHTML = sessionPassword
+    ? '피드백을 생성할 AI 엔진을 고르고 API 키를 입력하세요. <b style="color:var(--green)">✓ 이 키는 접속 비밀번호로 암호화되어 GitHub에 자동 동기화됩니다.</b>'
+    : '피드백을 생성할 AI 엔진을 고르고 API 키를 입력하세요. 지금은 동기화가 꺼져 있어 이 브라우저에만 저장되고, 새로고침하면 사라집니다. 상단 [동기화 설정]에서 비밀번호로 잠금 해제하면 다른 기기와 자동으로 동기화됩니다.';
+}
+function updateAITag(){
+  const names = {anthropic:'Anthropic Claude', openai:'OpenAI GPT', gemini:'Google Gemini'};
+  const hasKey = !!aiConfig.keys[aiConfig.provider] || aiConfig.provider==='anthropic';
+  $('aiTag').innerHTML = '엔진: <b>' + names[aiConfig.provider] + '</b>' + (hasKey ? '' : ' · 키 필요');
+}
+document.querySelectorAll('.pcard').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    aiConfig.provider = c.dataset.provider;
+    aiConfig.model = AI_DEFAULTS[aiConfig.provider].model;
+    renderAISettings();
+  });
+});
+$('modelInput').addEventListener('input', e=>{ aiConfig.model = e.target.value.trim(); updateAITag(); saveAIConfig(); });
+$('keyInput').addEventListener('input', e=>{ aiConfig.keys[aiConfig.provider] = e.target.value.trim(); updateAITag(); saveAIConfig(); });
+
+/* ─────────── AI 호출 ─────────── */
+async function callAI(prompt){
+  const {provider, model} = aiConfig;
+  const key = aiConfig.keys[provider];
+
+  if(provider==='anthropic'){
+    const headers = {'Content-Type':'application/json'};
+    if(key){
+      headers['x-api-key'] = key;
+      headers['anthropic-version'] = '2023-06-01';
+      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+    }
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers,
+      body: JSON.stringify({model, max_tokens:1000, messages:[{role:'user', content:prompt}]})
+    });
+    if(!res.ok) throw new Error('HTTP ' + res.status + (res.status===401 ? ' — API 키를 확인하세요' : ''));
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message || 'API 오류');
+    return (data.content||[]).map(b=>b.type==='text'?b.text:'').join('\n').trim();
+  }
+
+  if(provider==='openai'){
+    if(!key) throw new Error('OpenAI API 키를 입력하세요');
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body: JSON.stringify({model, messages:[{role:'user', content:prompt}]})
+    });
+    if(!res.ok) throw new Error('HTTP ' + res.status + (res.status===401 ? ' — API 키를 확인하세요' : ''));
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message || 'API 오류');
+    return data.choices[0].message.content.trim();
+  }
+
+  if(provider==='gemini'){
+    if(!key) throw new Error('Gemini API 키를 입력하세요');
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+    });
+    if(!res.ok) throw new Error('HTTP ' + res.status + (res.status===400||res.status===403 ? ' — API 키를 확인하세요' : ''));
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message || 'API 오류');
+    return data.candidates[0].content.parts.map(p=>p.text||'').join('\n').trim();
+  }
+  throw new Error('알 수 없는 엔진');
+}
+
+$('testBtn').addEventListener('click', async ()=>{
+  const btn = $('testBtn');
+  btn.disabled = true;
+  const prevText = btn.textContent;
+  btn.textContent = '확인 중…';
+  try{
+    const reply = await callAI('연결 테스트입니다. "정상 운행"이라고만 답하세요.');
+    alert('✓ 연결 성공\n응답: ' + reply.slice(0, 100));
+  }catch(err){
+    alert('✕ 연결 실패: ' + err.message);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = prevText;
+  }
+});
+
+/* ─────────── 간이 마크다운 렌더러 (AI 응답용) ─────────── */
+function renderMarkdown(md){
+  const lines = esc(md).split('\n');
+  let html = '', i = 0;
+  while(i < lines.length){
+    const line = lines[i];
+    if(/^\s*#{1,6}\s+/.test(line)){
+      html += `<h4>${line.replace(/^\s*#{1,6}\s+/, '')}</h4>`;
+      i++; continue;
+    }
+    if(/^\s*-{3,}\s*$/.test(line)){
+      html += '<hr>'; i++; continue;
+    }
+    if(/^\s*\|.*\|\s*$/.test(line)){
+      const tblLines = [];
+      while(i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){ tblLines.push(lines[i].trim()); i++; }
+      html += tableToHtml(tblLines);
+      continue;
+    }
+    if(line.trim() === ''){ i++; continue; }
+    html += `<p>${line}</p>`;
+    i++;
+  }
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  return html;
+}
+function tableToHtml(rows){
+  const cells = l => l.replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+  if(rows.length < 2) return rows.map(l=>`<p>${l}</p>`).join('');
+  const header = cells(rows[0]);
+  const body = rows.slice(2).map(cells);   // rows[1] = 구분선(---) 스킵
+  let h = '<table class="ai-table"><thead><tr>' + header.map(c=>`<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+  body.forEach(r => { h += '<tr>' + r.map(c=>`<td>${c}</td>`).join('') + '</tr>'; });
+  h += '</tbody></table>';
+  return h;
+}
+
+/* ─────────── AI 피드백 프롬프트 & 버튼 ─────────── */
+function buildRunLog(){
+  const tt = TT[todayKey];
+  let log = '';
+  PERIODS.forEach(p=>{
+    const sc = tt[p.n-1];
+    if(!sc) return;
+    const plan = plans[todayKey][p.n-1] || '(계획 없음)';
+    const res = results[todayKey][p.n-1];
+    log += `${p.n}교시 (${p.s}~${p.e}) | 학교수업: ${sc.sub} | 내 계획: ${plan} | 결과: ${res==='done'?'완성':res==='fail'?'실패':'미기록'}\n`;
+  });
+  return log;
+}
+async function runAI(prompt, btn){
+  const out = $('aiOutput'), load = $('aiLoading');
+  out.className = 'ai-output'; out.textContent = '';
+  load.classList.add('show');
+  btn.disabled = true;
+  try{
+    const reply = await callAI(prompt);
+    out.innerHTML = renderMarkdown(reply);
+    out.className = 'ai-output show';
+  }catch(err){
+    out.textContent = '피드백을 받지 못했습니다: ' + err.message + '\n[AI 피드백 설정] 탭에서 엔진과 키를 확인해 주세요.';
+    out.className = 'ai-output show err';
+  }finally{
+    load.classList.remove('show');
+    btn.disabled = false;
+  }
+}
+$('aiFeedbackBtn').addEventListener('click', function(){
+  const prompt =
+`너는 '오늘의 공부 급행'이라는 학습 열차의 베테랑 기관사다. 아래는 정시(수능) 준비생인 고등학생 승무원의 오늘 운행 일지다. 학교 수업 시간에 자습으로 자기 공부를 하는 학생이다.
+
+[오늘의 운행 일지 — ${todayKey}요일]
+${buildRunLog()}
+
+이 일지를 보고 한국어로 피드백을 해줘.
+1. 오늘 운행 총평 (2~3문장, 기관사 말투로 따뜻하지만 솔직하게)
+2. 잘한 점 1~2개
+3. 개선할 점 1~2개 (실패했거나 계획이 비어 있는 교시 중심으로, 구체적으로)
+4. 내일을 위한 조언 한 줄
+전체 350자 이내, 불릿 없이 자연스러운 문단으로.`;
+  runAI(prompt, this);
+});
+$('aiPlanBtn').addEventListener('click', function(){
+  const tIdx = DAYS.indexOf(todayKey);
+  const nextKey = DAYS[(tIdx+1) % 5];
+  const tt = TT[nextKey];
+  let sched = '';
+  PERIODS.forEach(p=>{
+    const sc = tt[p.n-1];
+    sched += `${p.n}교시 (${p.s}~${p.e}): ${sc ? sc.sub : '수업 없음'}\n`;
+  });
+  const prompt =
+`너는 '오늘의 공부 급행'이라는 학습 열차의 베테랑 기관사다. 정시(수능) 준비생인 고등학생이 학교 수업 시간에 자습으로 자기 공부를 한다.
+
+[오늘(${todayKey}) 운행 일지]
+${buildRunLog()}
+
+[다음 운행일(${nextKey}) 학교 시간표]
+${sched}
+
+오늘의 결과를 반영해서, ${nextKey}요일 각 교시에 어떤 수능 공부를 배치하면 좋을지 교시별로 짧게 제안해줘. 한국어로, 각 교시당 한 줄씩. 실패한 과목의 보완과 과목 균형을 고려할 것. 마지막에 한 줄 격려.`;
+  runAI(prompt, this);
+});
+
+/* Gist의 'aiconfig.json' 파일에 비밀번호로 암호화해서 저장 */
+function saveAIConfig(){
+  if(!gistConfig.enabled || !gistConfig.gistId || !gistConfig.token || !sessionPassword) return;
+  clearTimeout(aiSaveTimeout);
+  aiSaveTimeout = setTimeout(async ()=>{
+    try{
+      const encrypted = CryptoJS.AES.encrypt(JSON.stringify(aiConfig), sessionPassword).toString();
+      const res = await fetch(`https://api.github.com/gists/${gistConfig.gistId}`, {
+        method:'PATCH',
+        headers:{
+          'Authorization':`token ${gistConfig.token}`,
+          'Accept':'application/vnd.github.v3+json',
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({files:{'aiconfig.json':{content:JSON.stringify({encrypted}, null, 2)}}})
+      });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+    }catch(err){
+      console.error('AI 설정 저장 실패:', err);
+    }
+  }, 800);
+}
+
+/* 잠금 해제 시 같은 Gist에서 'aiconfig.json'을 가져와 복호화 */
+async function loadAIConfig(){
+  if(!gistConfig.enabled || !gistConfig.gistId || !sessionPassword) return;
+  try{
+    const headers = {'Accept':'application/vnd.github.v3+json'};
+    if(gistConfig.token) headers['Authorization'] = `token ${gistConfig.token}`;
+    const res = await fetch(`https://api.github.com/gists/${gistConfig.gistId}?t=${Date.now()}`, {headers, cache:'no-store'});
+    if(!res.ok) return;
+    const gist = await res.json();
+    const content = gist.files['aiconfig.json']?.content;
+    if(!content) return;
+    const {encrypted} = JSON.parse(content);
+    if(!encrypted) return;
+    const decrypted = CryptoJS.AES.decrypt(encrypted, sessionPassword).toString(CryptoJS.enc.Utf8);
+    if(!decrypted) return;
+    const loaded = JSON.parse(decrypted);
+    Object.assign(aiConfig, loaded);
+    if(loaded.keys) Object.assign(aiConfig.keys, loaded.keys);
+    renderAISettings();
+  }catch(err){
+    console.error('AI 설정 로드 실패:', err);
+  }
+}
+
+/* ─────────── 낮/밤 테마 ─────────── */
+function applyTheme(){
+  const h = fakeNow().getHours();
+  document.body.classList.toggle('day', h >= 6 && h < 18);
+}
+
+/* ─────────── 🛠 개발자 모드 패널 ─────────── */
+function fullDevRerender(){
+  renderDayTabs();
+  renderPlanRows();
+  renderStations();
+  drawTicks();
+  updateTrain();
+  tickClock();
+  applyTheme();
+}
+function setDevTime(targetDayIdx, hh, mm, speed){
+  const real = new Date();
+  let diffDays = targetDayIdx - real.getDay();
+  const target = new Date(real);
+  target.setDate(real.getDate() + diffDays);
+  target.setHours(hh, mm, 0, 0);
+  devBaseFakeMs = target.getTime();
+  devBaseRealMs = Date.now();
+  devSpeed = speed;
+  devActive = true;
+  recalcDayContext();
+  initBreakNotifications();
+  fullDevRerender();
+}
+function resetDevTime(){
+  devBaseFakeMs = Date.now();
+  devBaseRealMs = Date.now();
+  devSpeed = 1;
+  devActive = false;
+  recalcDayContext();
+  initBreakNotifications();
+  fullDevRerender();
+}
+function markDevDayButton(d){
+  document.querySelectorAll('#devDays button').forEach(b=>{
+    b.classList.toggle('active', +b.dataset.d === d);
+  });
+}
+$('devToggleBtn').addEventListener('click', ()=>{
+  const n = fakeNow();
+  $('devTimeInput').value = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+  markDevDayButton(n.getDay());
+  $('devPanel').classList.add('show');
+});
+$('devCloseBtn').addEventListener('click', ()=>$('devPanel').classList.remove('show'));
+$('devDays').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-d]');
+  if(!b) return;
+  markDevDayButton(+b.dataset.d);
+});
+$('devApplyBtn').addEventListener('click', ()=>{
+  const activeBtn = document.querySelector('#devDays button.active');
+  const d = activeBtn ? +activeBtn.dataset.d : fakeNow().getDay();
+  const [hh, mm] = $('devTimeInput').value.split(':').map(Number);
+  const speed = +$('devSpeedSelect').value;
+  setDevTime(d, hh||0, mm||0, speed);
+});
+$('devResetBtn').addEventListener('click', resetDevTime);
+document.querySelectorAll('.dev-quick-btns button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const speed = +$('devSpeedSelect').value || 60;
+    if(b.dataset.preset === 'p1')    setDevTime(1, 8, 59, speed);   // 월요일, 1교시 종료 1분 전
+    if(b.dataset.preset === 'lunch') setDevTime(1, 11, 59, speed);  // 월요일, 점심 1분 전
+    if(b.dataset.preset === 'last')  setDevTime(1, 15, 59, speed);  // 월요일, 종착 1분 전
+    const n = fakeNow();
+    $('devTimeInput').value = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+    markDevDayButton(n.getDay());
+  });
+});
+
+/* ─────────── 초기화 & 실행 ─────────── */
+function tickAll(){ tickClock(); updateTrain(); drawTicks(); renderStations(); checkBreakNotifications(); }
+renderDayTabs();
+renderPlanRows();
+renderAISettings();
+applyTheme();
+initBreakNotifications();
+tickAll();
+setInterval(()=>{ tickClock(); updateTrain(); drawTicks(); applyTheme(); checkBreakNotifications(); }, 2000);
+setInterval(renderStations, 5000);
+
+/* 접속 시 비밀번호 키패드 팝업 */
+$('repoLabel').textContent = CONFIG_REPO;
+renderPinDisplay();
+$('pinModal').classList.add('show');
+</script>
+</body>
+</html>
